@@ -1,0 +1,41 @@
+version: '3.6'
+
+volumes:
+  db_data:
+    driver: local
+
+services:
+  postgres:
+    image: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  graphql-engine:
+    build: ./hasura
+    ports:
+    - "8081:8080"
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_ADMIN_SECRET: ${ADMIN_SECRET}
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: public
+      HASURA_GRAPHQL_ACTIONS_HANDLER_WEBHOOK_BASEURL: http://host.docker.internal:3000
+      HASURA_GRAPHQL_JWT_SECRET: '{"jwk_url": "http://host.docker.internal:3000/.well-known/openid-configuration/graphql"}'
+    depends_on:
+      - "postgres"
+      - "web-backend"
+
+  web-backend:
+    build: ./app/server
+    ports:
+    - "3000:3000"
+    volumes:
+      - ./app/server/src:/app/src
+    environment:
+      HASURA_GRAPHQL_ADMIN_SECRET: ${ADMIN_SECRET}
+      API_SERVER: http://host.docker.internal:8081/v1/graphql

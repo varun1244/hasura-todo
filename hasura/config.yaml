@@ -1,0 +1,7 @@
+version: 2
+endpoint: http://localhost:8081
+admin_secret: "4ssist4me"
+metadata_directory: metadata
+actions:
+  kind: synchronous
+  handler_webhook_baseurl: '{{HASURA_GRAPHQL_ACTIONS_HANDLER_WEBHOOK_BASEURL}}'
